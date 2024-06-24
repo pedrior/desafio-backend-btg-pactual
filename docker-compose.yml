@@ -1,0 +1,55 @@
+﻿name: btgpactual-orderprocessor
+
+services:
+  api:
+    image: btgpactual.orderprocessor
+    build:
+      context: .
+      dockerfile: src/BtgPactual.OrderProcessor/Dockerfile
+    container_name: orderprocessor-api
+    ports:
+      - "5050:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+    depends_on:
+      db:
+        condition: service_healthy
+      queue:
+        condition: service_healthy
+
+  db:
+    image: postgres
+    container_name: orderprocessor-postgres
+    healthcheck:
+      test: [ "CMD", "pg_isready", "-U", "root" ]
+      interval: 10s
+      timeout: 30s
+      retries: 5
+    ports:
+      - "5051:5432"
+    environment:
+      - POSTGRES_DB=orderprocessor
+      - POSTGRES_USER=root
+      - POSTGRES_PASSWORD=password
+    volumes:
+      - .data:/var/lib/postgresql/data
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+  
+  queue:
+    image: rabbitmq:management
+    container_name: orderprocessor-rabbitmq
+    hostname: orderprocessor-queue
+    healthcheck:
+      test: rabbitmq-diagnostics check_port_connectivity
+      interval: 10s
+      timeout: 30s
+      retries: 5
+    ports:
+      - "5052:15672"
+    environment:
+      - RABBITMQ_DEFAULT_USER=guest
+      - RABBITMQ_DEFAULT_PASS=guest
+    volumes:
+      - .rabbitmq/data:/var/lib/rabbitmq
+      - .rabbitmq/logs:/var/log/rabbitmq

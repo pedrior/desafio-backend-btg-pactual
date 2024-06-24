@@ -1,0 +1,2 @@
+GET {{baseUrl}}/customers/1/orders?page=1&limit=10
+Accept: application/json

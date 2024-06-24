@@ -1,0 +1,2 @@
+GET {{baseUrl}}/orders/1001
+Accept: application/json
